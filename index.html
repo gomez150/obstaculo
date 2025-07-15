@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Juego de Movimiento con Teclado</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Arial', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+    }
+    .game-container {
+      text-align: center;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 20px;
+      border-radius: 15px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+    }
+    h1 {
+      margin-bottom: 10px;
+      font-size: 2.5em;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    }
+    .game-area {
+      position: relative;
+      width: 600px;
+      height: 400px;
+      background: #2c3e50;
+      border: 4px solid #34495e;
+      border-radius: 10px;
+      margin: 20px auto;
+      overflow: hidden;
+      box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+    }
+    .player {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      background: #3498db;
+      border: 2px solid #2980b9;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      top: 20px;
+      left: 20px;
+      transition: all 0.1s ease;
+      z-index: 10;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+    .obstacle {
+      position: absolute;
+      background: #e74c3c;
+      border: 2px solid #c0392b;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+    .obstacle-1 { width: 80px; height: 60px; top: 100px; left: 150px; }
+    .obstacle-2 { width: 60px; height: 80px; top: 200px; left: 300px; }
+    .obstacle-3 { width: 100px; height: 40px; top: 320px; left: 100px; }
+    .obstacle-4 { width: 40px; height: 100px; top: 50px; left: 400px; }
+    .obstacle-5 { width: 70px; height: 50px; top: 180px; left: 480px; }
+    .obstacle-6 { width: 50px; height: 70px; top: 280px; left: 350px; }
+    .goal {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      background: #f1c40f;
+      border: 3px solid #f39c12;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      top: 320px;
+      right: 20px;
+      animation: pulse 2s infinite;
+      box-shadow: 0 0 20px rgba(241, 196, 15, 0.6);
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+    .controls {
+      margin: 20px 0;
+    }
+    .controls p {
+      margin-bottom: 10px;
+      font-size: 1.2em;
+    }
+    #resetBtn {
+      background: #27ae60;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 25px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    #resetBtn:hover {
+      background: #2ecc71;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    }
+    .status {
+      margin-top: 15px;
+    }
+    #statusMessage {
+      font-size: 1.1em;
+      font-weight: bold;
+      padding: 10px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.2);
+      display: inline-block;
+      min-width: 200px;
+    }
+    .collision {
+      background: #e74c3c !important;
+      animation: shake 0.5s ease-in-out;
+    }
+    .victory {
+      background: #27ae60 !important;
+      animation: bounce 0.6s ease-in-out;
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    @media (max-width: 768px) {
+      .game-area {
+        width: 90vw;
+        max-width: 500px;
+        height: 300px;
+      }
+      .player {
+        width: 30px;
+        height: 30px;
+        font-size: 18px;
+      }
+      .goal {
+        width: 40px;
+        height: 40px;
+        font-size: 24px;
+      }
+      .obstacle {
+        transform: scale(0.8);
+      }
+      h1 {
+        font-size: 2em;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <h1>🎮 Juego de Movimiento</h1>
+    <p>Usa las flechas del teclado para mover el personaje. ¡Llega a la meta sin tocar los obstáculos!</p>
+    <div class="game-area" id="gameArea">
+      <div class="player" id="player">🤖</div>
+      <div class="obstacle obstacle-1"></div>
+      <div class="obstacle obstacle-2"></div>
+      <div class="obstacle obstacle-3"></div>
+      <div class="obstacle obstacle-4"></div>
+      <div class="obstacle obstacle-5"></div>
+      <div class="obstacle obstacle-6"></div>
+      <div class="goal" id="goal">🏆</div>
+    </div>
+    <div class="controls">
+      <p>Controles: ⬅️ ⬆️ ⬇️ ➡️</p>
+      <button id="resetBtn">🔄 Reiniciar</button>
+    </div>
+    <div class="status">
+      <p id="statusMessage">¡Muévete hacia la meta!</p>
+    </div>
+  </div>
+
+  <script>
+    const player = document.getElementById('player');
+    const goal = document.getElementById('goal');
+    const statusMessage = document.getElementById('statusMessage');
+    const resetBtn = document.getElementById('resetBtn');
+
+    const MOVE_SPEED = 20;
+    const GAME_WIDTH = 600;
+    const GAME_HEIGHT = 400;
+    const PLAYER_SIZE = 40;
+
+    let playerPosition = { x: 20, y: 20 };
+    let gameState = { isGameOver: false, hasWon: false };
+
+    const obstacles = [
+      { x: 150, y: 100, width: 80, height: 60 },
+      { x: 300, y: 200, width: 60, height: 80 },
+      { x: 100, y: 320, width: 100, height: 40 },
+      { x: 400, y: 50, width: 40, height: 100 },
+      { x: 480, y: 180, width: 70, height: 50 },
+      { x: 350, y: 280, width: 50, height: 70 }
+    ];
+
+    const goalPosition = { x: 530, y: 320, width: 50, height: 50 };
+
+    function initGame() {
+      playerPosition.x = 20;
+      playerPosition.y = 20;
+      gameState.isGameOver = false;
+      gameState.hasWon = false;
+      updatePlayerPosition();
+      updateStatusMessage('¡Muévete hacia la meta!');
+      player.classList.remove('collision', 'victory');
+    }
+
+    function updatePlayerPosition() {
+      player.style.left = playerPosition.x + 'px';
+      player.style.top = playerPosition.y + 'px';
+    }
+
+    function isWithinBounds(x, y) {
+      return x >= 0 && x <= GAME_WIDTH - PLAYER_SIZE && y >= 0 && y <= GAME_HEIGHT - PLAYER_SIZE;
+    }
+
+    function checkObstacleCollision(x, y) {
+      const rect = { x: x, y: y, width: PLAYER_SIZE, height: PLAYER_SIZE };
+      return obstacles.some(ob => rect.x < ob.x + ob.width && rect.x + rect.width > ob.x && rect.y < ob.y + ob.height && rect.y + rect.height > ob.y);
+    }
+
+    function checkGoalReached(x, y) {
+      const rect = { x: x, y: y, width: PLAYER_SIZE, height: PLAYER_SIZE };
+      return rect.x < goalPosition.x + goalPosition.width && rect.x + rect.width > goalPosition.x && rect.y < goalPosition.y + goalPosition.height && rect.y + rect.height > goalPosition.y;
+    }
+
+    function handleCollision() {
+      gameState.isGameOver = true;
+      player.classList.add('collision');
+      updateStatusMessage('¡Colisión! Presiona "Reiniciar" para intentar de nuevo.');
+      setTimeout(() => player.classList.remove('collision'), 500);
+    }
+
+    function handleVictory() {
+      gameState.hasWon = true;
+      gameState.isGameOver = true;
+      player.classList.add('victory');
+      updateStatusMessage('¡Felicidades! ¡Has llegado a la meta! 🎉');
+      setTimeout(() => player.classList.remove('victory'), 600);
+    }
+
+    function updateStatusMessage(message) {
+      statusMessage.textContent = message;
+    }
+
+    function movePlayer(direction) {
+      if (gameState.isGameOver) return;
+      let newX = playerPosition.x;
+      let newY = playerPosition.y;
+      if (direction === 'ArrowUp') newY -= MOVE_SPEED;
+      else if (direction === 'ArrowDown') newY += MOVE_SPEED;
+      else if (direction === 'ArrowLeft') newX -= MOVE_SPEED;
+      else if (direction === 'ArrowRight') newX += MOVE_SPEED;
+      else return;
+
+      if (!isWithinBounds(newX, newY)) {
+        updateStatusMessage('¡No puedes salir del área de juego!');
+        return;
+      }
+
+      if (checkObstacleCollision(newX, newY)) {
+        handleCollision();
+        return;
+      }
+
+      playerPosition.x = newX;
+      playerPosition.y = newY;
+      updatePlayerPosition();
+
+      if (checkGoalReached(newX, newY)) {
+        handleVictory();
+        return;
+      }
+
+      updateStatusMessage('¡Sigue moviéndote hacia la meta!');
+    }
+
+    document.addEventListener('keydown', function(event) {
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
+        event.preventDefault();
+        movePlayer(event.key);
+      }
+    });
+
+    resetBtn.addEventListener('click', function() {
+      initGame();
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+      initGame();
+      updateStatusMessage('¡Juego cargado! Usa las flechas para moverte.');
+    });
+
+    document.addEventListener('keydown', function(event) {
+      if (event.key.toLowerCase() === 'd') {
+        console.log('Posición del jugador:', playerPosition);
+        console.log('Estado del juego:', gameState);
+        console.log('Obstáculos:', obstacles);
+        console.log('Meta:', goalPosition);
+      }
+    });
+  </script>
+</body>
+</html>
